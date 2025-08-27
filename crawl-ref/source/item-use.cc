@@ -1894,7 +1894,10 @@ bool oni_drunken_swing()
             attk.never_cleave = true;
 
             if (!attk.would_prompt_player())
+            {
                 attk.launch_attack_set();
+                count_action(CACT_ATTACK, ATTACK_DRUNKEN_BRAWLING);
+            }
         }
 
         return true;
@@ -2029,6 +2032,7 @@ bool drink(item_def* potion)
     else
         dec_mitm_item_quantity(potion->index(), 1);
     count_action(CACT_USE, OBJ_POTIONS);
+    count_action(CACT_DRINK, potion->sub_type);
     you.turn_is_over = true;
 
     // This got deferred from PotionExperience::effect to prevent SIGHUP abuse.
@@ -3123,6 +3127,7 @@ bool read(item_def* scroll, dist *target)
             dec_mitm_item_quantity(scroll->index(), 1);
 
         count_action(CACT_USE, OBJ_SCROLLS);
+        count_action(CACT_READ, scroll->sub_type);
     }
 
     if (!alreadyknown

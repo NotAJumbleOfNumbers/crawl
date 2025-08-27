@@ -1238,11 +1238,17 @@ static string _describe_action(caction_type type)
 #if TAG_MAJOR_VERSION == 34
     case CACT_EAT:
         return "Eat";
-#endif
     case CACT_RIPOSTE:
         return "Riposte";
+#endif
     case CACT_FORM:
         return "Form";
+    case CACT_ATTACK:
+        return "Attack";
+    case CACT_DRINK:
+        return "Drink";
+    case CACT_READ:
+        return "Read";
     default:
         return "Error";
     }
@@ -1284,6 +1290,18 @@ static const char* _aux_attack_names[] =
 };
 COMPILE_CHECK(ARRAYSZ(_aux_attack_names) == NUM_UNARMED_ATTACKS);
 
+static const char* _attack_count_names[]
+{
+    "Normal",
+    "Lunge",
+    "Whirlwind",
+    "Riposte",
+    "Spellmotor",
+    "Spellclaws",
+    "Drunken Brawl",
+};
+COMPILE_CHECK(ARRAYSZ(_attack_count_names) == NUM_ATTACK_COUNT_TYPES);
+
 static string _describe_action_subtype(caction_type type, int compound_subtype)
 {
     pair<int, int> types = caction_extract_types(compound_subtype);
@@ -1301,7 +1319,6 @@ static string _describe_action_subtype(caction_type type, int compound_subtype)
     }
     case CACT_MELEE:
     case CACT_FIRE:
-    case CACT_RIPOSTE:
         if (subtype == -1)
         {
             if (auxtype == -1)
@@ -1322,7 +1339,7 @@ static string _describe_action_subtype(caction_type type, int compound_subtype)
         }
         return uppercase_first(item_base_name(OBJ_WEAPONS, subtype));
     case CACT_ARMOUR:
-        return (subtype == -1) ? "Skin"
+        return (subtype == -1) ? "None"
                : uppercase_first(item_base_name(OBJ_ARMOUR, subtype));
     case CACT_BLOCK:
     {
@@ -1368,11 +1385,11 @@ static string _describe_action_subtype(caction_type type, int compound_subtype)
             return uppercase_first(dummy.name(DESC_DBNAME, true));
         }
 
+#if TAG_MAJOR_VERSION == 34
         switch ((evoc_type)subtype)
         {
         case EVOC_WAND:
             return "Wand";
-#if TAG_MAJOR_VERSION == 34
         case EVOC_ROD:
             return "Rod";
         case EVOC_DECK:
@@ -1381,10 +1398,13 @@ static string _describe_action_subtype(caction_type type, int compound_subtype)
             return "Miscellaneous";
         case EVOC_BUGGY_TOME:
             return "tome";
-#endif
         default:
             return "Error";
         }
+#else
+        return "Error";
+#endif
+
     case CACT_USE:
         return uppercase_first(base_type_string((object_class_type)subtype));
     case CACT_STAB:
@@ -1392,7 +1412,17 @@ static string _describe_action_subtype(caction_type type, int compound_subtype)
         ASSERT_RANGE(subtype, 1, NUM_STABS);
         return _stab_names[subtype];
     case CACT_FORM:
-        return get_form((transformation)subtype)->short_name;
+        if ((transformation)subtype == transformation::none)
+            return "Default";
+        else
+            return get_form((transformation)subtype)->short_name;
+    case CACT_ATTACK:
+        ASSERT_RANGE(subtype, 0, NUM_ATTACK_COUNT_TYPES);
+        return _attack_count_names[subtype];
+    case CACT_DRINK:
+        return uppercase_first(potion_type_name(subtype));
+    case CACT_READ:
+        return uppercase_first(scroll_type_name(subtype));
 #if TAG_MAJOR_VERSION == 34
     case CACT_EAT:
         return "Removed food";
@@ -1401,6 +1431,25 @@ static string _describe_action_subtype(caction_type type, int compound_subtype)
         return "Error";
     }
 }
+
+static caction_type _action_count_order[]
+{
+    CACT_ATTACK,
+    CACT_MELEE,
+    CACT_FIRE,
+    CACT_THROW,
+    CACT_CAST,
+    CACT_INVOKE,
+    CACT_ABIL,
+    CACT_EVOKE,
+    CACT_DRINK,
+    CACT_READ,
+    CACT_STAB,
+    CACT_ARMOUR,
+    CACT_DODGE,
+    CACT_BLOCK,
+    CACT_FORM,
+};
 
 static void _sdump_action_counts(dump_params &par)
 {
@@ -1420,8 +1469,9 @@ static void _sdump_action_counts(dump_params &par)
         par.text += "+-------";
     par.text += "++-------\n";
 
-    for (int cact = 0; cact < NUM_CACTIONS; cact++)
+    for (unsigned int index = 0; index < ARRAYSZ(_action_count_order); ++index)
     {
+        caction_type cact = _action_count_order[index];
         vector<pair<int, FixedVector<int, 28> > > action_vec;
         for (const auto &entry : you.action_count)
         {
