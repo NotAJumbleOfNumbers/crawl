@@ -1903,6 +1903,16 @@ DESCRIP: Majesty:   You are bathed in light that prevents you from turning
  enemies and refuse to leave the floor again for some time.
 +Ring++:   You can equip two additional rings.
 
+NAME:    amulet of the Unnamed Test Object
+INSCRIP: Inacc
+OBJ:     OBJ_JEWELLERY/AMU_NOTHING
+COLOUR:  ETC_ELECTRICITY
+TILE:    urand_air
+BOOL:    enh_air, elec, fly, rmsl, rMut
+DESCRIP: Inacc:     It reduces the accuracy of your attacks and spells.
++rDoom: You lose Doom twice as quickly.
++rOstracism: You lose Ostracism twice as quickly.
+
 # Fedhas sprint, to allow coglins access to evocable invisibility.
 ENUM:     SCARF_INVISIBILITY
 NAME:     scarf of invisibility
